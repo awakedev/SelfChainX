@@ -1,5 +1,5 @@
-const SHA256 = require('crypto-js/sha256');
-const EC = require ('elliptic').ec;
+const SHA384 = require('crypto-js/sha384');
+const EC = require('elliptic').ec;
 const ec = new EC('secp256k1');
 
 
@@ -11,12 +11,12 @@ class Transaction {
     }
 
     calculateHash() {
-        return SHA256(this.fromAddress + this.toAddress + this.amount).toString();
+        return SHA384(this.fromAddress + this.toAddress + this.amount).toString();
     }
 
     signTransaction(signingKey) {
-        if(signingKey.getPublic('hex') !== this.fromAddress){
-            throw new Error ("You cannot sign transactions for other wallets!");
+        if (signingKey.getPublic('hex') !== this.fromAddress) {
+            throw new Error("You cannot sign transactions for other wallets!");
         }
 
 
@@ -25,14 +25,14 @@ class Transaction {
         this.signature = sig.toDER('hex');
     }
 
-    isValid(){
-        if(this.fromAddress === null) return true;
-        if(!this.signature || this.signature.length === 0) {
-            throw new Error ( " No signature in this transaction! ");
+    isValid() {
+        if (this.fromAddress === null) return true;
+        if (!this.signature || this.signature.length === 0) {
+            throw new Error(" No signature in this transaction! ");
         }
         const publicKey = ec.keyFromPublic(this.fromAddress, 'hex');
         return publicKey.verify(this.calculateHash(), this.signature);
-    } 
+    }
 }
 
 class Block {
@@ -45,7 +45,7 @@ class Block {
     }
 
     calculateHash() {
-        return SHA256(this.index + this.prevHash + this.timestamp + JSON.stringify(this.data) + this.nonce).toString();
+        return SHA384(this.index + this.prevHash + this.timestamp + JSON.stringify(this.activityLevel) + this.nonce).toString();
     }
 
     mineBlock(difficulty) {
@@ -59,7 +59,7 @@ class Block {
 
     hasValidTransactions() {
         for (const tx of this.transactions) {
-            if(!tx.isValid()) {
+            if (!tx.isValid()) {
                 return false;
             }
         }
@@ -74,37 +74,44 @@ class Blockchain {
         this.difficulty = 3;
         this.pendingTransactions = [];
         this.miningReward = 100;
+        this.activityLevel = 10;
     }
 
     createGenBlock() {
-        return new Block('19/12/2018', 'Genesis Block', 'no');
+        return new Block('19/12/2018', 'Genesis Block', '10', 'no');
     }
 
     getLatestBlock() {
         return this.chain[this.chain.length - 1];
     }
 
+    getActivityBalance() {
+        console.log('Activity level of Nathan is: ' + this.activityLevel) 
+    }
+
     minePendingTransactions(miningRewardAddress) {
-        const rewardTx = new Transaction(null, miningRewardAddress, this.miningReward);
-        this.pendingTransactions.push(rewardTx);
-        
-        let block = new Block(Date.now(), this.pendingTransactions);
-        block.mineBlock(this.difficulty);
+        if (this.activityLevel > 7) {
+            const rewardTx = new Transaction(null, miningRewardAddress, this.miningReward);
+            this.pendingTransactions.push(rewardTx);
 
-        console.log('Block mined successfully !');
-        this.chain.push(block);
+            let block = new Block(Date.now(), this.pendingTransactions);
+            block.mineBlock(this.difficulty);
 
-        this.pendingTransactions = [new Transaction(null, miningRewardAddress, this.miningReward)];
+            console.log('Block mined successfully !');
+            this.chain.push(block);
+
+            this.pendingTransactions = [new Transaction(null, miningRewardAddress, this.miningReward)];
+        }
     }
 
     addTransaction(transaction) {
-        if(!transaction.fromAddress || !transaction.toAddress){
+        if (!transaction.fromAddress || !transaction.toAddress) {
             throw new Error("Transaction must include from and to address");
         }
-        if(!transaction.isValid()){
-            throw new Error("Cannot add invalid transaction to chain"); 
+        if (!transaction.isValid()) {
+            throw new Error("Cannot add invalid transaction to chain");
         }
-        
+
         this.pendingTransactions.push(transaction);
     }
 
@@ -125,12 +132,14 @@ class Blockchain {
         return balance;
     }
 
+
+
     isChainValid() {
         for (let i = 1; i < this.chain.length; i++) {
             const currentBlock = this.chain[i];
             const previousBlock = this.chain[i - 1];
 
-            if (!currentBlock.hasValidTransactions()){
+            if (!currentBlock.hasValidTransactions()) {
                 return false;
             }
 
