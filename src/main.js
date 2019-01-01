@@ -8,7 +8,7 @@ const myWalletAddress = myKey.getPublic('hex');
 
 let activityToken = new Blockchain();
 
-const tx1 = new Transaction(myWalletAddress, '>Public Key Goes Here<', 30);
+const tx1 = new Transaction(myWalletAddress, '>Public Key Goes Here<', 50);
 tx1.signTransaction(myKey);
 
 activityToken.addTransaction(tx1);
@@ -21,7 +21,6 @@ activityToken.minePendingTransactions(myWalletAddress);
 console.log('\n Balance of nathan is:', activityToken.getBalanceOfAddress(myWalletAddress));
 
 
-
-activityToken.getActivityBalance();
+activityToken.getContentReward();
 // console.log("Is chain valid?", activityToken.isChainValid());
 

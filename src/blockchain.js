@@ -42,6 +42,7 @@ class Block {
         this.prevHash = prevHash;
         this.hash = this.calculateHash();
         this.nonce = 0;
+        this.contentReward=0;
     }
 
     calculateHash() {
@@ -74,7 +75,10 @@ class Blockchain {
         this.difficulty = 3;
         this.pendingTransactions = [];
         this.miningReward = 100;
-        this.activityLevel = 10;
+        this.categoryMultiplier = 2;
+        this.rewardFeedback = 5;
+        this.upVote = 0;
+        
     }
 
     createGenBlock() {
@@ -85,12 +89,20 @@ class Blockchain {
         return this.chain[this.chain.length - 1];
     }
 
-    getActivityBalance() {
-        console.log('Activity level of Nathan is: ' + this.activityLevel) 
+   
+
+    calcReward() {
+        this.contentReward = this.rewardFeedback*this.categoryMultiplier;
+        return this.contentReward;
+
+    }
+
+    getContentReward() {
+        console.log('Content reward pending to Nathan is: ' + this.calcReward()); 
     }
 
     minePendingTransactions(miningRewardAddress) {
-        if (this.activityLevel > 7) {
+        
             const rewardTx = new Transaction(null, miningRewardAddress, this.miningReward);
             this.pendingTransactions.push(rewardTx);
 
@@ -102,7 +114,7 @@ class Blockchain {
 
             this.pendingTransactions = [new Transaction(null, miningRewardAddress, this.miningReward)];
         }
-    }
+    
 
     addTransaction(transaction) {
         if (!transaction.fromAddress || !transaction.toAddress) {
